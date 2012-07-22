@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Balancer</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css"
+        rel="stylesheet" type="text/css" />
+    <style>
+        canvas
+        {
+            margin: 50px auto;
+            display: block;
+            border: 1px solid #ccc;
+        }
+        
+        .sliders
+        {
+            margin: 50px auto;
+            width: 480px;
+            display: block;
+        }
+        
+        #rslider .ui-state-default
+        {
+            border: 1px solid #e00;
+            background: #f00;
+        }
+        
+        #gslider .ui-state-default
+        {
+            border: 1px solid #0e0;
+            background: #0f0;
+        }
+        
+        #bslider .ui-state-default
+        {
+            border: 1px solid #00e;
+            background: #00e;
+        }
+    </style>
+</head>
+<body>
+    <canvas id='myCanvas' height="360" width="480">
+    </canvas>
+    <div id="controlpanel">
+        <div class="sliders" id="rslider">
+        </div>
+        <div class="sliders" id="gslider">
+        </div>
+        <div class="sliders" id="bslider">
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"
+        type="text/javascript"></script>
+    
+    <script type="text/javascript">
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+
+        var image = new Image();
+        image.src = "../images/veneza.jpg";
+
+        $(image).load(function () {
+            $(".sliders").slider(
+            {
+                min: 0,
+                max: 400,
+                value: 100,
+                change: onchange
+            });
+
+
+            context.drawImage(image, 0, 0, 480, 360);
+        });
+
+        function onchange(e, ui) {
+            context.drawImage(image, 0, 0, 480, 360);
+
+            var rfactor = $("#rslider").slider("value") / 100;
+            var gfactor = $("#gslider").slider("value") / 100;
+            var bfactor = $("#bslider").slider("value") / 100;
+
+            var imagedata = context.getImageData(0, 0,
+                canvas.width,
+                canvas.height
+                );
+
+            var pixels = imagedata.data;
+            var numpixels = pixels.length / 4;
+
+            context.clearRect(
+                0, 0,
+                canvas.width,
+                canvas.height);
+
+
+            for (var pos = 0; pos < numpixels; pos++) {
+
+                pixels[pos * 4] = pixels[pos * 4] * rfactor;
+                pixels[pos * 4 + 1] = pixels[pos * 4 + 1] * gfactor;
+                pixels[pos * 4 + 2] = pixels[pos * 4 + 2] * bfactor;
+            }
+
+            context.putImageData(imagedata, 0, 0);
+        };
+
+    </script>
+</body>
+</html>
