@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Amazing trees</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css"
+        rel="stylesheet" type="text/css" />
+    <style>
+        *
+        {
+            margin: 0;
+            padding: 0;
+        }
+        html, body
+        {
+            height: 100%;
+            width: 100%;
+        }
+        canvas
+        {
+            display: block;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <canvas id='target' height="480" width="480">
+    </canvas>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            // -----------------------------------------------------
+            function CanvasAdapter(canvas, context) {
+                this.canvas = canvas;
+                this.context = context;
+
+                this.canvasWidth = canvas.width;
+                this.canvasHeight = canvas.height;
+
+                this.clear = function () {
+                    this.context.clearRect(0, 0,
+            this.canvasWidth,
+            this.canvasHeight
+            );
+                };
+
+                this.drawLine = function (x1, y1, x2, y2, pen) {
+                    with (this.context) {
+                        beginPath();
+                        moveTo(x1, this.canvasHeight - y1);
+                        lineTo(x2, this.canvasHeight - y2);
+                        lineWidth = pen;
+                        lineCap = "round";
+                        stroke();
+                    }
+                };
+            }
+
+            var canvas = $('#target');
+            var context = canvas.get(0).getContext('2d');
+            var ca = new CanvasAdapter(canvas, context);
+
+            // -----------------------------------------------------
+
+            var drawTree = function (depth, x, y, length, theta, branchWidth) {
+
+                if (depth < 0) return;
+
+                var rand = Math.random;
+                var maxAngle = Math.PI / 2;
+                var x2 = x + length * Math.cos(theta);
+                var y2 = y + length * Math.sin(theta);
+
+                ca.context.strokeStyle = (depth <= 2) ?
+                    'rgb(0,' + parseInt(rand() * 64 + 128) + ',0)' :
+                    'rgb(' + parseInt(rand() * 64 + 64) + ',50,25)';
+
+                ca.drawLine(x, y, x2, y2, branchWidth);
+
+                var subBranches = rand() * 2 + 1;
+                for (var i = 0; i < subBranches; i++) {
+                    drawTree(
+                        depth - 1,
+                        x2, y2,
+                        length * (0.7 + rand() * 0.3),
+                        theta + rand() * maxAngle - 0.5 * maxAngle,
+                        branchWidth * 0.7
+                        );
+                }
+            };
+            // -----------------------------------------------------
+
+            function resizeCanvas() {
+                canvas.attr("width", $(window).get(0).innerWidth);
+                canvas.attr("height", $(window).get(0).innerHeight);
+                ca.canvasWidth = canvas.width();
+                ca.canvasHeight = canvas.height();
+                ca.clear();
+                drawTree(12, ca.canvasWidth / 2, 10, ca.canvasHeight / 8, Math.PI / 2, 12);
+            };
+            $(window).resize(resizeCanvas);
+            resizeCanvas();
+
+            canvas.click(function () {
+                ca.clear();
+                drawTree(12, ca.canvasWidth / 2, 10, ca.canvasHeight / 8, Math.PI / 2, 12);
+            });
+
+        });
+    </script>
+</body>
+</html>
