@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Tree</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css" rel="stylesheet"
+        type="text/css" />
+    <style>
+        *
+        {
+            font-family: Sans-Serif;
+        }
+        
+        canvas
+        {
+            margin: 50px auto;
+            display: block;
+            border: 1px solid #ccc;
+        }
+        
+        .sliders
+        {
+            margin: 10px auto;
+            width: 480px;
+            display: block;
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id='myCanvas' height="300" width="480">
+    </canvas>
+    
+    <label class=sliders for="depthSlider">Depth</label>
+    <div class="sliders" id="depthSlider">
+    </div>
+    
+    <label class=sliders for="deltaThetaSlider">Delta Theta</label>
+    <div class="sliders" id="deltaThetaSlider">
+    </div>
+
+    <label class=sliders for="lengthScaleSlider">Length Scale</label>
+    <div class="sliders" id="lengthScaleSlider">
+    </div>
+
+    <label class=sliders for="lengthScaleSlider">Base Length</label>
+    <div class="sliders" id="baseLengthSlider">
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" 
+        type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" 
+        type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            var canvas = document.getElementById('myCanvas');
+            var context = canvas.getContext('2d');
+
+            var canvasWidth = canvas.width;
+            var canvasHeight = canvas.height;
+
+
+            $("#depthSlider").slider(
+            {
+                min: 3, max: 15, animate: true,
+                change: function (e, ui) { update(); }
+            });
+
+            $("#deltaThetaSlider").slider(
+            {
+                min: -Math.PI / 2, max: Math.PI / 2, step: 0.01, value: Math.PI / 5, animate: true,
+                change: function (e, ui) { update(); }
+            });
+
+            $("#lengthScaleSlider").slider(
+            {
+                min: 0.2, max: 0.9, step: 0.01, value: 0.7, animate: true,
+                change: function (e, ui) { update(); }
+            });
+
+            $("#baseLengthSlider").slider(
+            {
+                min: 5, max: 200, step: 0.01, value: 100, animate: true,
+                change: function (e, ui) { update(); }
+            });
+
+            function getLengthScale() {
+                return $("#lengthScaleSlider").slider("value");
+            };
+
+            function getDeltaTheta() {
+                return $("#deltaThetaSlider").slider("value");
+            }
+
+            function getDepth() {
+                return $("#depthSlider").slider("value");
+            }
+
+            function getBaseLength() {
+                return $("#baseLengthSlider").slider("value");
+            }
+
+            function drawBranch(depth, x, y, length, theta) {
+                var x1 = x + length * Math.cos(theta);
+                var y1 = y + length * Math.sin(theta);
+
+                context.beginPath();
+                context.moveTo(x, canvasHeight - y);
+                context.lineTo(x1, canvasHeight - y1);
+                context.closePath();
+                context.stroke();
+
+                if (depth > 1) {
+                    drawBranch(depth - 1, x1, y1, length * getLengthScale(), theta + getDeltaTheta());
+                    drawBranch(depth - 1, x1, y1, length * getLengthScale(), theta - getDeltaTheta());
+                }
+            }
+
+            function update() {
+                context.clearRect(0, 0, canvasWidth, canvasHeight);
+                drawBranch(getDepth(), canvasWidth / 2, 0, getBaseLength(), 90 * Math.PI / 180);
+            }
+
+            update();
+        });
+    </script>
+</body>
+</html>
