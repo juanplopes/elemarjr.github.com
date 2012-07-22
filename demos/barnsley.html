@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Barnsley Fern Chaos</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css"
+        rel="stylesheet" type="text/css" />
+    <style>
+        *
+        {
+            margin: 0;
+            padding: 0;
+        }
+        html, body
+        {
+            height: 100%;
+            width: 100%;
+        }
+        canvas
+        {
+            display: block;
+            float: left;
+        }
+    </style>
+</head>
+<body>
+    <canvas id='target' height="480" width="480">
+    </canvas>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            function BarnsleyFern() {
+                this.nthPoint = {
+                    x: 0,
+                    y: 0
+                };
+
+                this.f_1 = function () {
+                    this.nthPoint.x = 0;
+                    this.nthPoint.y *= 0.16;
+                };
+
+                this.f_2 = function () {
+                    var oldX = this.nthPoint.x;
+                    var oldY = this.nthPoint.y;
+                    this.nthPoint.x = 0.85 * oldX + 0.04 * oldY;
+                    this.nthPoint.y = -0.04 * oldX + 0.85 * oldY + 1.6;
+                }
+
+                this.f_3 = function () {
+                    var oldX = this.nthPoint.x;
+                    var oldY = this.nthPoint.y;
+                    this.nthPoint.x = 0.2 * oldX + -0.26 * oldY;
+                    this.nthPoint.y = 0.23 * oldX + 0.22 * oldY + 1.6;
+                }
+
+                this.f_4 = function () {
+                    var oldX = this.nthPoint.x;
+                    var oldY = this.nthPoint.y;
+                    this.nthPoint.x = -0.15 * oldX + 0.28 * oldY;
+                    this.nthPoint.y = 0.26 * oldX + 0.24 * oldY + 0.44;
+                }
+
+                this.iterate = function () {
+                    var rand = Math.floor(Math.random() * 100);
+                    if (rand <= 3)
+                        this.f_1();
+                    else if (rand <= 76)
+                        this.f_2();
+                    else if (rand <= 90)
+                        this.f_3();
+                    else if (rand >= 90)
+                        this.f_4();
+                    return this.nthPoint;
+                }
+            }
+            var fern = new BarnsleyFern();
+
+            // -----------------------------------------------------
+            var MathHelper = {
+                distance: function (x1, y1, x2, y2) {
+                    var dx = x2 - x1;
+                    var dy = y2 - y1;
+                    return Math.sqrt(dx * dx + dy * dy);
+                }
+            };
+
+            // -----------------------------------------------------
+            function BarnsleyViewport(w, h) {
+                var margin = 40;
+                var size = Math.min(w, h) - 40;
+
+                this.points = new Array(2);
+                this.points[0] = {
+                    x: w / 2 - size / 4,
+                    y: h / 2 - size / 2
+                };
+
+                this.points[1] = {
+                    x: w / 2 + size / 4,
+                    y: h / 2 + size / 2
+                };
+
+                this.moving = 0;
+
+                this.getLimits = function () {
+                    with (this) {
+                        return {
+                            min: {
+                                x: Math.min(points[0].x, points[1].x),
+                                y: Math.min(points[0].y, points[1].y)
+                            },
+                            max: {
+                                x: Math.max(points[0].x, points[1].x),
+                                y: Math.max(points[0].y, points[1].y)
+                            }
+                        };
+                    }
+                };
+
+                this.pickPoint = function (x, y) {
+                    if (MathHelper.distance(x, y, this.points[0].x, this.points[0].y) < 10)
+                        return 0;
+
+                    if (MathHelper.distance(x, y, this.points[1].x, this.points[1].y) < 10)
+                        return 1;
+
+                    return -1;
+                };
+
+                this.project = function (p) {
+                    var limits = this.getLimits();
+                    var w = limits.max.x - limits.min.x;
+                    var h = limits.max.y - limits.min.y;
+                    return {
+                        x: p.x * (w / 5) + limits.min.x + ((2.18 / 5) * w),
+                        y: p.y * (h / 10) + limits.min.y
+                    }
+                };
+            }
+
+            // -----------------------------------------------------
+
+            function CanvasAdapter(canvas, context) {
+                this.canvas = canvas;
+                this.context = context;
+
+                this.canvasWidth = canvas.width;
+                this.canvasHeight = canvas.height;
+
+                this.clear = function () {
+                    this.context.clearRect(0, 0,
+                        this.canvasWidth,
+                        this.canvasHeight
+                        );
+                };
+
+                this.drawLine = function (x1, y1, x2, y2) {
+                    with (this.context) {
+                        beginPath();
+                        moveTo(x1, this.canvasHeight - y1);
+                        lineTo(x2, this.canvasHeight - y2);
+                        closePath();
+                        stroke();
+                    }
+                };
+
+                this.drawPoint = function (p) {
+                    this.drawLine(p.x, p.y, p.x + 1, p.y);
+                };
+
+                this.drawMarker = function (x, y) {
+                    this.drawLine(x - 10, y, x + 10, y);
+                    this.drawLine(x, y - 10, x, y + 10);
+                };
+
+                this.drawFrame = function (x1, y1, x2, y2, moving) {
+                    with (this) {
+                        context.strokeStyle = "#eee";
+                        drawLine(x1, y1, x2, y1);
+                        drawLine(x2, y1, x2, y2);
+                        drawLine(x2, y2, x1, y2);
+                        drawLine(x1, y2, x1, y1);
+
+                        context.strokeStyle = 0 == moving ? "#f00" : "#000";
+                        drawMarker(x1, y1);
+                        context.strokeStyle = 1 == moving ? "#f00" : "#000";
+                        drawMarker(x2, y2);
+                    }
+                };
+            }
+
+            var canvas = $('#target');
+            var context = canvas.get(0).getContext('2d');
+            var ca = new CanvasAdapter(canvas, context);
+
+            // -----------------------------------------------------
+
+            var vp;
+            function resizeCanvas() {
+                canvas.attr("width", $(window).get(0).innerWidth);
+                canvas.attr("height", $(window).get(0).innerHeight);
+                ca.canvasWidth = canvas.width();
+                ca.canvasHeight = canvas.height();
+                vp = new BarnsleyViewport(ca.canvasWidth, ca.canvasHeight);
+                ca.clear();
+                playGame();
+            };
+            $(window).resize(resizeCanvas);
+            resizeCanvas();
+
+            // -----------------------------------------------------
+
+            $("#target").click(function (e) {
+                var nx = e.pageX;
+                var ny = ca.canvasHeight - e.pageY;
+
+                if ((picked = vp.pickPoint(nx, ny)) != -1)
+                    vp.moving = picked;
+                else {
+                    vp.points[vp.moving].x = nx;
+                    vp.points[vp.moving].y = ny;
+                    ca.clear();
+                }
+            });
+
+            // -----------------------------------------------------
+
+            function playGame() {
+                ca.context.strokeStyle = "#0f0";
+                for (var i = 0; i < 100; i++) {
+                    ca.drawPoint(vp.project(fern.iterate()));
+                }
+                ca.drawFrame(vp.points[0].x, vp.points[0].y, vp.points[1].x, vp.points[1].y, vp.moving);
+                setTimeout(playGame, 33);
+            }
+        });
+    </script>
+</body>
+</html>
