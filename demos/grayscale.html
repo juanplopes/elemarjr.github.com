@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixelation</title>
+
+    <style>
+        canvas, button
+        {
+            margin: 50px auto;
+            display: block;
+        }
+        canvas
+        {
+            border: 1px solid #ccc;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id='myCanvas' height="360" width="480">
+    </canvas>
+
+    <button id="grayscaleButton">Grayscale!</button>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+
+        var image = new Image();
+        image.src = "../images/veneza.jpg";
+
+        $(image).load(function () {
+            context.drawImage(image, 0, 0, 480, 360);
+        });
+
+        $("#grayscaleButton").click(function () {
+            context.drawImage(image, 0, 0, 480, 360);
+
+            var imagedata = context.getImageData(0, 0,
+                canvas.width,
+                canvas.height
+                );
+
+            var pixels = imagedata.data;
+            var numpixels = pixels.length / 4;
+
+            context.clearRect(
+                0, 0,
+                canvas.width,
+                canvas.height);
+
+
+            for (var pos = 0; pos < numpixels; pos++) {
+
+                var gray = pixels[pos * 4] * 0.3 +
+                pixels[pos * 4 + 1] * 0.59 +
+                pixels[pos * 4 + 2] * 0.11
+
+                pixels[pos * 4] = gray;
+                pixels[pos * 4 + 1] = gray;
+                pixels[pos * 4 + 2] = gray;
+            }
+
+            context.putImageData(imagedata, 0, 0);
+        });
+
+    </script>
+</body>
+</html>
+
