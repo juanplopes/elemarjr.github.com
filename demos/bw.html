@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixelation</title>
+
+    <style>
+        canvas, button
+        {
+            margin: 50px auto;
+            display: block;
+        }
+        canvas
+        {
+            border: 1px solid #ccc;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id='myCanvas' height="360" width="480">
+    </canvas>
+
+    <button id="bwButton">Black and White!</button>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+
+        var image = new Image();
+        image.src = "../images/veneza.jpg";
+
+        $(image).load(function () {
+            context.drawImage(image, 0, 0, 480, 360);
+        });
+
+        $("#bwButton").click(function () {
+            context.drawImage(image, 0, 0, 480, 360);
+
+            var imagedata = context.getImageData(0, 0,
+                canvas.width,
+                canvas.height
+                );
+
+            var pixels = imagedata.data;
+            var numpixels = pixels.length / 4;
+
+            context.clearRect(
+                0, 0,
+                canvas.width,
+                canvas.height);
+
+            for (var pos = 0; pos < numpixels; pos++) {
+
+                var gray = (pixels[pos * 4] +
+                    pixels[pos * 4 + 1] +
+                    pixels[pos * 4 + 2]) / 3;
+
+                var bw = (gray > 204 || gray < 51) ? 0 : 255;
+
+                pixels[pos * 4] = bw;
+                pixels[pos * 4 + 1] = bw;
+                pixels[pos * 4 + 2] = bw;
+            }
+
+
+            context.putImageData(imagedata, 0, 0);
+        });
+
+    </script>
+</body>
+</html>
+
