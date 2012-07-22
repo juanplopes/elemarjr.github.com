@@ -143,6 +143,8 @@ strong {
   font-weight: bold;
 }
 
+/* Retirado para não quebrar o bootstrap
+
 img {
   position: relative;
   margin: 0 auto;
@@ -157,6 +159,7 @@ img {
   -o-box-shadow: 0 0 5px #ebebeb;
   -ms-box-shadow: 0 0 5px #ebebeb;
 }
+*/
 
 pre, code {
   width: 100%;
@@ -204,7 +207,6 @@ ul, ol, dl {
 }
 
 ul li {
-  list-style: inside;
   padding-left: 20px;
 }
 
