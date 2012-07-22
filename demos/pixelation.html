@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixelation</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.0/themes/base/jquery-ui.css"
+        rel="stylesheet" type="text/css" />
+
+    <style>
+        canvas
+        {
+            margin: 50px auto;
+            display: block;
+            border: 1px solid #ccc;
+        }
+        
+        #tileSlider
+        {
+            margin: 50px;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id='myCanvas' height="360" width="480">
+    </canvas>
+
+    <div id="tileSlider"></div>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" 
+        type="text/javascript"></script>
+    <script type="text/javascript">
+        var canvas = document.getElementById('myCanvas');
+        var context = canvas.getContext('2d');
+
+        var image = new Image();
+        image.src = "../images/veneza.jpg";
+
+        $(image).load(function () {
+            $("#tileSlider").slider(
+            {
+                min: 0,
+                max: 80,
+                animate: true,
+                change: function (e, ui) { pixelate(ui.value == 0 ? 0 : 80 - ui.value); }
+            });
+            pixelate(0);
+        });
+
+        function pixelate(tilesCount) {
+            context.drawImage(image, 0, 0, 480, 360);
+            if (tilesCount == 0) return;
+
+            var imagedata = context.getImageData(0, 0,
+                canvas.width,
+                canvas.height
+                );
+
+            var pixels = imagedata.data;
+
+            context.clearRect(
+                0, 0,
+                canvas.width,
+                canvas.height);
+
+            var rows = tilesCount;
+            var cols = tilesCount;
+            var tileheight = imagedata.height / rows;
+            var tilewidth = imagedata.width / cols;
+
+            for (var r = 0; r < rows; r++) {
+                for (var c = 0; c < cols; c++) {
+                    var x = (c * tilewidth) + tilewidth / 2;
+                    var y = (r * tileheight) + tileheight / 2;
+
+                    var pos = (Math.floor(y) * imagedata.width * 4) +
+                        (Math.floor(x) * 4)
+
+                    var red = pixels[pos];
+                    var green = pixels[pos + 1];
+                    var blue = pixels[pos + 2];
+
+                    context.fillStyle = "rgb(" + red
+                        + ", " + green
+                        + ", " + blue
+                        + ")";
+
+                    context.fillRect(
+                        x - tilewidth / 2,
+                        y - tileheight / 2,
+                        tilewidth,
+                        tileheight
+                    );
+                }
+            }
+        };
+    </script>
+</body>
+</html>
+
