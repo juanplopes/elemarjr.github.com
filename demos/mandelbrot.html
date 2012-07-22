@@ -1,0 +1,277 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>Mandelbrot set</title>
+	<style type="text/css">
+		*
+		{
+			margin: 0;
+			padding: 0;
+		}
+		
+		#presets
+		{
+			width: 210px;
+			margin: 10px auto;
+			display: block;
+		}
+		
+		canvas
+		{
+			border: 1px solid Black;
+			margin: 10px auto;
+			display: block;
+		}
+	</style>
+	<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css"
+		rel="stylesheet" type="text/css" />
+</head>
+<body>
+	<form>
+	<div id="presets">
+		<input type="radio" id="r300" name="radio" checked="checked" /><label for="r300">300</label>
+		<input type="radio" id="r450" name="radio" /><label for="r450">450</label>
+		<input type="radio" id="r600" name="radio" /><label for="r600">600</label>
+	</div>
+	</form>
+	<canvas id="target" width="50" height="50">
+	</canvas>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" type="text/javascript"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"
+		type="text/javascript"></script>
+	<script type="text/javascript">
+	    $(function () {
+
+	        MandelColors = {
+	            controlColors: new Array(5),
+	            colors: new Array(512),
+
+	            reset: function () {
+	                with (MandelColors) {
+	                    controlColors[0] = [0x00, 0x00, 0x20];
+	                    controlColors[1] = [0xff, 0xff, 0xff];
+	                    controlColors[2] = [0x00, 0x00, 0xa0];
+	                    controlColors[3] = [0x40, 0xff, 0xff];
+	                    controlColors[4] = [0x20, 0x20, 0xff];
+	                }
+	            },
+
+	            compute: function () {
+	                with (MandelColors) {
+	                    var i, k;
+	                    colors[0] = [0, 0, 0];
+
+	                    for (i = 0; i < 4; i++) {
+	                        var rstep = (controlColors[i + 1][0] - controlColors[i][0]) / 63;
+	                        var bstep = (controlColors[i + 1][1] - controlColors[i][1]) / 63;
+	                        var gstep = (controlColors[i + 1][2] - controlColors[i][2]) / 63;
+
+	                        for (k = 0; k < 64; k++) {
+	                            colors[k + (i * 64) + 1] = [
+								Math.round(controlColors[i][0] + rstep * k),
+								Math.round(controlColors[i][1] + bstep * k),
+								Math.round(controlColors[i][2] + gstep * k)];
+	                        }
+	                    }
+
+	                    for (i = 257; i < 512; i++) {
+	                        colors[i] = colors[i - 256];
+	                    }
+	                }
+	            }
+	        };
+
+	        Mandel = {
+	            iterLimit: 100,
+	            qmin: -1.5,
+	            qmax: 1.5,
+	            pmin: -2.25,
+	            pmax: 0.75,
+
+	            reset: function () {
+	                Mandel.iterLimit = 100;
+	                Mandel.qmin = -1.5;
+	                Mandel.qmax = 1.5;
+	                Mandel.pmin = -2.25;
+	                Mandel.pmax = 0.75;
+	            },
+
+	            compute: function () {
+	                var kmax = 256;
+	                var x = 0.0;
+	                var y = 0.0;
+	                var r = 1.0;
+
+	                mandelImage = context.getImageData(0, 0, canvasWidth, canvasHeight);
+	                mandelPixels = mandelImage.data;
+
+	                var xstep = (Mandel.pmax - Mandel.pmin) / canvasWidth;
+	                var ystep = (Mandel.qmax - Mandel.qmin) / canvasHeight;
+	                for (var sx = 0; sx < canvasWidth; sx++) {
+	                    for (var sy = 0; sy < canvasHeight; sy++) {
+	                        var p = Mandel.pmin + xstep * sx;
+	                        var q = Mandel.qmax - ystep * sy;
+	                        var k = 0;
+	                        var x0 = 0.0;
+	                        var y0 = 0.0;
+
+	                        do {
+	                            x = x0 * x0 - y0 * y0 + p;
+	                            y = 2 * x0 * y0 + q;
+	                            x0 = x;
+	                            y0 = y;
+	                            r = x * x + y * y;
+	                            k++;
+	                        }
+	                        while ((r <= Mandel.iterLimit) && (k < kmax));
+
+	                        if (k >= kmax) {
+	                            k = 0;
+	                        }
+
+	                        drawPixel(mandelPixels, sx, sy, k);
+	                    }
+	                }
+	                context.putImageData(mandelImage, 0, 0);
+	            }
+
+	        };
+
+	        var canvas = $("#target");
+	        var context = canvas.get(0).getContext("2d");
+	        var canvasWidth;
+	        var canvasHeight;
+
+
+
+	        $("#presets").buttonset();
+	        $("#r300").click(function () { load(300, 300); });
+	        $("#r450").click(function () { load(450, 450); });
+	        $("#r600").click(function () { load(600, 600); });
+
+	        function load(w, h) {
+	            $("#target").animate(
+					{
+					    width: w + "px",
+					    height: h + "px"
+					},
+					200
+				);
+	            canvas.get(0).width = w;
+	            canvas.get(0).height = h;
+
+	            canvasWidth = w;
+	            canvasHeight = h;
+	            with (canvas.get(0)) {
+	                left = offsetLeft;
+	                top = offsetTop;
+	            }
+
+	            MandelColors.reset();
+	            MandelColors.compute();
+	            Mandel.reset();
+	            Mandel.compute();
+	        }
+	        load(300, 300);
+	        //------------------------------------------------------
+
+	        var selecting = false;
+	        var mbX = 0;
+	        var mbY = 0;
+	        var meX = 0;
+	        var meY = 0;
+	        var left = 0;
+	        var top = 0;
+	        var backImage;
+
+	        function onStartSelect(e) {
+	            e = window.event || e;
+	            coords = getCoords(e);
+	            mbX = coords.x;
+	            mbY = coords.y;
+	            backImage = context.getImageData(0, 0, canvasWidth, canvasHeight);
+	            selecting = true;
+	        }
+
+	        function onSelectArea(e) {
+	            if (!selecting) return;
+
+	            e = window.event || e;
+	            coords = getCoords(e);
+
+	            meX = coords.x;
+	            meY = mbY +
+					((coords.y > mbY ? 1 : -1)) *
+					Math.round(canvasHeight * Math.abs(coords.x - mbX) / canvasWidth);
+
+	            context.putImageData(backImage, 0, 0);
+	            context.strokeStyle = "#f00";
+	            context.strokeRect(mbX, mbY, meX - mbX, meY - mbY);
+	        }
+
+
+	        function onEndSelect(e) {
+	            if (!selecting) return
+
+	            var x1 = Math.min(mbX, meX);
+	            var y1 = Math.min(mbY, meY);
+	            var x2 = Math.max(mbX, meX);
+	            var y2 = Math.max(mbY, meY);
+
+	            if ((Math.abs(x2 - x1) > 3) && (Math.abs(y2 - y1) > 3)) {
+	                with (Mandel) {
+	                    var pw = pmax - pmin;
+	                    pmin = pmin + x1 * pw / canvasHeight;
+	                    pmax = pmax - (canvasWidth - x2) * pw / canvasWidth;
+	                    var qw = qmax - qmin;
+	                    qmin = qmin + (canvasHeight - y2) * qw / canvasHeight;
+	                    qmax = qmax - y1 * qw / canvasHeight;
+	                    compute();
+	                }
+
+	            }
+
+	            selecting = false;
+	        }
+
+	        function getCoords(e) {
+	            if (e.offsetX)
+	                return { x: e.offsetX, y: e.offsetY };
+
+	            return { x: e.pageX - canvas.get(0).offsetLeft, y: e.pageY - canvas.get(0).offsetTop };
+	        }
+
+
+
+	        function init() {
+	            with (canvas.get(0)) {
+	                onmousedown = onStartSelect;
+	                onmousemove = onSelectArea;
+	                onmouseup = onEndSelect;
+	                addEventListener("touchstart", onStartSelect, false);
+	                addEventListener("touchmove", onSelectArea, false);
+	                addEventListener("touchend", onEndSelect, false);
+	            }
+	            document.body.addEventListener('touchmove', function (event) {
+	                event.preventDefault();
+	            }, false);
+	        }
+	        init();
+
+	        //------------------------------------------------------
+
+
+
+	        function drawPixel(mandelPixels, x, y, c) {
+	            var offset = 4 * (y * canvasWidth + x);
+	            mandelPixels[offset] = MandelColors.colors[c][0];
+	            mandelPixels[offset + 1] = MandelColors.colors[c][1];
+	            mandelPixels[offset + 2] = MandelColors.colors[c][2];
+	            mandelPixels[offset + 3] = 255;
+	        }
+	    });
+
+		
+	</script>
+</body>
+</html>
